@@ -1,7 +1,7 @@
 package apiserver
 
 import (
-	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -30,7 +30,6 @@ func (s *APIServer) Start() error {
 		return err
 	}
 	s.logger.Info("Start API server")
-	s.logger.Info("")
 
 	s.configRouter()
 
@@ -56,6 +55,12 @@ func (s *APIServer) configRouter() {
 func (s *APIServer) apiHello() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		//идея засунуть сюда свегер и выводить доступные методы
-		io.WriteString(rw, "HELLO API")
+		file, err := ioutil.ReadFile("static/apiHelper.html")
+		if err != nil {
+			s.logger.Error("Error apiHelper")
+			rw.Write([]byte("501 - Not Implemented"))
+			return
+		}
+		rw.Write(file)
 	}
 }
