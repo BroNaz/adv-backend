@@ -1,1 +1,1 @@
-bint_addr: ":8080"
+bint_addr = ":8080"
