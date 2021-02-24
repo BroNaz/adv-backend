@@ -10,6 +10,10 @@ type UserRepository struct {
 // Create accepts a standard structure with the fields email, encrypted_password,
 // creates an object in the database and returns a fully prepared user view
 func (r *UserRepository) Create(u *model.User) (*model.User, error) {
+	if err := u.Validate(); err != nil {
+		return nil, err
+	}
+
 	if err := u.BeforeCreate(); err != nil {
 		return nil, err
 	}

@@ -30,13 +30,23 @@ func TestUser_Validate(t *testing.T) {
 			isValid: false,
 		},
 		{
-			nameTask: "emty pswword",
+			nameTask: "empty password",
 			user: func() *model.User {
 				u := model.TestUser(t)
 				u.Password = ""
 				return u
 			},
 			isValid: false,
+		},
+		{
+			nameTask: "encrypt password",
+			user: func() *model.User {
+				u := model.TestUser(t)
+				u.Password = ""
+				u.EncryptedPassword = "NoNilValue"
+				return u
+			},
+			isValid: true,
 		},
 	}
 
