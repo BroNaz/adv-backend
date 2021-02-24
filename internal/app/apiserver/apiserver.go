@@ -1,76 +1,39 @@
 package apiserver
 
 import (
-	"io/ioutil"
+	"database/sql"
 	"net/http"
 
-	"github.com/BroNaz/adv-backend/internal/app/store"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
+	"github.com/BroNaz/adv-backend/internal/app/store/sqlstore"
 )
 
-// APIServer - управляющая сущность
-type APIServer struct {
-	config *Config
-	logger *logrus.Logger
-	router *mux.Router
-	Store  *store.Store
-}
+func Start(config *Config) error {
 
-// New - возвращает дефолтный APIServer
-func New(config *Config) *APIServer {
-	return &APIServer{
-		config: config,
-		logger: logrus.New(),
-		router: mux.NewRouter(),
-	}
-}
-
-// Start - точка входа сервиса и конфигурация его
-func (s *APIServer) Start() error {
-	if err := s.configLogger(); err != nil {
-		return err
-	}
-
-	s.logger.Info("Start API server")
-
-	if err := s.configStore(); err != nil {
-		//		s.logger.Error("Store ERROR ", err)
-		return err
-	}
-
-	s.configRouter()
-
-	return http.ListenAndServe(s.config.BindAddr, s.router)
-}
-
-func (s *APIServer) configLogger() error {
-	level, err := logrus.ParseLevel(s.config.LogLevel)
+	db, err := newDB(config.DatabaseURL)
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
-	s.logger.SetLevel(level)
-	return nil
+	store := sqlstore.New(db)
+	srv := newServer(store)
+
+	return http.ListenAndServe(config.BindAddr, srv)
 }
 
-func (s *APIServer) configRouter() {
-
-	// http://localhost:8080/api
-	s.router.HandleFunc("/api", s.apiHello())
-}
-
-func (s *APIServer) configStore() error {
-	temp := store.New(s.config.Store)
-	if err := temp.Open(); err != nil {
-		return err
+func newDB(databaseURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", databaseURL)
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
 	}
 
-	s.Store = temp
-	return nil
-
+	return db, nil
 }
 
+/*
 func (s *APIServer) apiHello() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		//идея засунуть сюда свегер и выводить доступные методы
@@ -83,3 +46,4 @@ func (s *APIServer) apiHello() http.HandlerFunc {
 		rw.Write(file)
 	}
 }
+*/
